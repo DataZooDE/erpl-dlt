@@ -74,11 +74,19 @@ def seed_delta_token_statements(url: str, entity_set: str, token: str) -> list[t
     no stored position at all.
     """
     return [
-        ("DELETE FROM erpl_web.odp_subscriptions WHERE service_url = ? AND entity_set_name = ?", [url, entity_set]),
         (
-            "INSERT INTO erpl_web.odp_subscriptions (service_url, entity_set_name, delta_token, last_updated) "
-            "VALUES (?, ?, ?, now())",
-            [url, entity_set, token],
+            "DELETE FROM erpl_web.odp_subscriptions WHERE service_url = ? AND entity_set_name = ?",
+            [url, entity_set],
+        ),
+        (
+            # Every NOT NULL column has to be named: erpl_web's own
+            # subscription_id is timestamp-prefixed and changes each run, which
+            # is also why the delete matches on the unique key instead.
+            "INSERT INTO erpl_web.odp_subscriptions "
+            "(subscription_id, service_url, entity_set_name, secret_name, delta_token, "
+            " subscription_status, preference_applied, schema_version) "
+            "VALUES (?, ?, ?, NULL, ?, 'active', TRUE, 1)",
+            [f"erpl_dlt_{entity_set}", url, entity_set, token],
         ),
     ]
 

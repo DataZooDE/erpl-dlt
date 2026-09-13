@@ -52,6 +52,14 @@ class TestDeltaTokenSeeding:
             assert "TOK'EN" not in sql
             assert "TOK'EN" in parameters or "E" in parameters
 
+    def test_every_not_null_column_is_supplied(self):
+        # erpl_web's table requires subscription_id and the status columns; an
+        # INSERT without them fails only on the *second* run, when a token
+        # exists to seed.
+        insert = seed_delta_token_statements("https://gw/E", "E", "T")[1][0]
+        for column in ("subscription_id", "subscription_status", "preference_applied", "schema_version"):
+            assert column in insert
+
 
 class TestBicsSession:
     def test_the_last_statement_is_the_only_one_that_returns_rows(self):

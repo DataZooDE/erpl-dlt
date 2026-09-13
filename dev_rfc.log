@@ -262,3 +262,219 @@ Please ask your system administrator to activate uuidd according to SAP note 139
 
 2026-09-13 12:00:49.943529 [140197246809920] >> Info entry
 	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:01:42.536904 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4112560
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:01:42.536914 [140287914923840] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:01:42.536917 [140287914923840] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:02:11.760061 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4114106
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:02:11.760071 [140302994577216] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:02:11.760075 [140302994577216] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:02:35.091890 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4115623
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:02:35.091900 [139872433276736] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:02:35.091903 [139872433276736] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:02:48.040239 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4115993
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:02:48.040249 [140563469432640] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:02:48.040253 [140563469432640] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:03:06.337601 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4117044
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:03:06.337611 [139762346108736] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:03:06.337614 [139762346108736] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:03:19.543511 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4117918
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:03:19.543522 [140312434906944] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:03:19.543526 [140312434906944] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:03:41.216740 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4120449
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:03:41.216750 [140146919561024] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:03:41.216754 [140146919561024] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:03:52.689617 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4121400
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:03:52.689627 [139676358674240] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:03:52.689630 [139676358674240] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.
+
+**** Log file opened at 2026-09-13 12:04:15.153952 UTC+02:00 (GMT), Encoding default
+NW RFC Library: SDK variant, Release 750 Patch Level 13
+Compilation date          : Mar 29 2024 18:53:43
+CPIC library              : 753.2024.03.04 version 3
+NI library                : 40
+Kernel Release            : 753 Patch Level 1316
+Current working directory : /home/jr/Projects/datazoo/erpl-dlt
+Program                   : python
+Process ID                : 4124976
+User                      : jr
+Hardware                  : AMD/Intel x86_64 with Linux x86_64
+Operating_system          : Linux 6.18.46-1-lts
+Hostname                  : bigfox
+IP address                : 127.0.1.1
+IPv6 address              : fe80::a4ae:f804:1559:2425
+Global trace level        : 0
+
+2026-09-13 12:04:15.153961 [140515032762176] >> Error entry
+	The UUID daemon (uuidd) is not active.
+Please ask your system administrator to activate uuidd according to SAP note 1391070.
+
+2026-09-13 12:04:15.153966 [140515032762176] >> Info entry
+	Did not find config file /home/jr/Projects/datazoo/erpl-dlt/sapnwrfc.ini.

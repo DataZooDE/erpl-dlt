@@ -187,8 +187,7 @@ class TestTypeRoundTrip:
         )
         with pipeline.sql_client() as client:
             kind = client.execute_sql(
-                "SELECT data_type FROM information_schema.columns "
-                "WHERE table_name = 'usr02' AND column_name = 'gltgv'"
+                "SELECT data_type FROM information_schema.columns WHERE table_name = 'usr02' AND column_name = 'gltgv'"
             )[0][0]
             nulls = client.execute_sql("SELECT count(*) FROM usr02 WHERE gltgv IS NULL")[0][0]
             total = client.execute_sql("SELECT count(*) FROM usr02")[0][0]

@@ -28,3 +28,63 @@ Five SAP read paths, one connection layer:
 | `erpl_odp_source` | ODP delta — real server-side change data, over RFC or the SAP Gateway |
 | `erpl_bics_source` | BW InfoProviders and BEx queries |
 | `erpl_invoke_source` | Remote-enabled function modules and BAPIs |
+
+## Configuration
+
+Credentials resolve through dlt, so nothing needs to be passed in code:
+
+```toml
+# .dlt/secrets.toml
+[sources.erpl_dlt.credentials]
+ashost = "sap.example.com"
+sysnr = "00"
+client = "100"
+user = "SVC_DLT"
+password = "..."
+```
+
+They are bound as parameters to DuckDB's `CREATE SECRET`, never formatted into
+SQL text — query text reaches logs.
+
+## What the sources do
+
+```python
+from erpl_dlt import erpl_rfc_source
+
+erpl_rfc_source(
+    table_names=["SFLIGHT", "SBOOK"],
+    # Pushed into SAP. On a 55-column table, naming two columns measured 3.8x
+    # faster than reading all of them.
+    columns={"SBOOK": ["CARRID", "CONNID", "FLDATE", "LOCCURAM"]},
+    # Becomes a WHERE clause that DuckDB pushes into the RFC call, so SAP does
+    # the filtering. `EXPLAIN` shows it as `Filters:` inside SAP_READ_TABLE.
+    cursor_columns={"SBOOK": "FLDATE"},
+    primary_keys={"SBOOK": ["CARRID", "CONNID", "FLDATE", "BOOKID"]},
+)
+```
+
+Extraction is Arrow-native: batches come from DuckDB's `to_arrow_reader` and go
+straight to dlt, so no row becomes a Python dict. SAP's types arrive correct
+without casting — `DATS` as `date32[day]`, `CURR` as `decimal128`, an empty SAP
+date as NULL. dlt's naming normaliser will rename columns containing digits:
+`AS4DATE` lands as `as4_date`.
+
+Each resource takes its own DuckDB cursor, so `parallelized=True` is safe.
+
+## Development
+
+```bash
+uv venv && uv pip install -e ".[dev]"
+just check            # ruff, mypy --strict, unit tests
+ERPL_IT=1 just it     # integration tests against a real SAP system
+```
+
+Integration tests are skipped unless `ERPL_IT=1` and credentials are set. They
+use no mocks: they assert that a projection reaches SAP, that `EXPLAIN` shows
+the predicate inside the scan, that ODP's delta token survives a fresh process,
+and that DECIMAL/DATE/TIME survive into the destination schema.
+
+## Status
+
+Tested against ERPL v2026.09.04, DuckDB 1.5.5, dlt 1.30, Python 3.10–3.13, on
+Linux x86-64 — the only platform ERPL publishes these extensions for.
