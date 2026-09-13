@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "erpl-dlt"
-version = "0.1.0"
+version = "2026.9.4"
 description = "dlt sources for SAP: tables and CDS views, OData, ODP delta, BW queries and function modules, via the ERPL DuckDB extensions."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"

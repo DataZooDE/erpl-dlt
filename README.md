@@ -100,5 +100,6 @@ and that DECIMAL/DATE/TIME survive into the destination schema.
 
 ## Status
 
-Tested against ERPL v2026.09.04, DuckDB 1.5.5, dlt 1.30, Python 3.10–3.13, on
-Linux x86-64 — the only platform ERPL publishes these extensions for.
+Tested against ERPL and ERPL Web v2026.09.04, DuckDB 1.5.5, dlt 1.30, Python 3.10–3.13, on
+Linux x86-64 — the only platform ERPL publishes these extensions for. Releases follow
+CalVer matching the supported ERPL release (e.g. `2026.9.4`).

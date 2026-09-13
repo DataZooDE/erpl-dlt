@@ -13,7 +13,7 @@ from erpl_dlt.odp import erpl_odp_odata_source, erpl_odp_source
 from erpl_dlt.rfc import erpl_rfc_source
 from erpl_dlt.settings import ERPL_VERSION
 
-__version__ = "0.1.0"
+__version__ = "2026.9.4"
 
 #: The ERPL release this package is tested against.
 __erpl_version__ = ERPL_VERSION
