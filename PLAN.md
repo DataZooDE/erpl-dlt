@@ -116,6 +116,18 @@ erpl_invoke_source(functions=[{"name": ..., "function": ..., "path": ..., "param
 Every resource is built by passing the generator *function* to `dlt.resource`,
 so hints stay overridable via `apply_hints`.
 
+## Implementation status
+
+All eight slices are implemented and green as of commit `e261abd`. Gates:
+`ruff check`, `ruff format --check`, `mypy --strict`, and 90 tests -- 72 needing
+no SAP system, 18 integration tests against an ABAP Platform Trial with no
+mocks. The three Phase 0 unknowns are settled and recorded in `NOTES.md`.
+
+What is **not** done: `erpl-extensions` is not on PyPI, so
+`pip install erpl-dlt[extensions]` cannot resolve yet and the dev workflow
+installs it from the local wheel. No CI workflow, and no publishing -- both out
+of scope by the brief.
+
 ## Implementation order — vertical slices, each ending green
 
 0. **Settle the unknowns.** The DATS sentinel, the TIMS mapping, and whether
