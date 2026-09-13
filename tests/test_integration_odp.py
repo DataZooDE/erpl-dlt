@@ -39,9 +39,7 @@ class TestOdpOverRfc:
         # nothing and creates no table. Asserting "rows arrived" therefore has
         # to ask for a snapshot, which also leaves the delta pointer alone.
         pipeline.run(
-            erpl_odp_source(
-                names=[ODP_NAME], credentials=sap_credentials, context=ODP_CONTEXT, full_refresh=True
-            )
+            erpl_odp_source(names=[ODP_NAME], credentials=sap_credentials, context=ODP_CONTEXT, full_refresh=True)
         )
         table = f"{ODP_CONTEXT}_{ODP_NAME}".lower().replace("$", "_")
         with pipeline.sql_client() as client:

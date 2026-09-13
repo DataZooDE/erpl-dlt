@@ -3,27 +3,71 @@
 import pytest
 
 from erpl_dlt.bics import session_statements
-from erpl_dlt.odp import odp_rfc_query, seed_delta_token_statements, subscriber_process
-from erpl_dlt.query import QueryError
+from erpl_dlt.odp import (
+    odp_recovery_parameter,
+    odp_rfc_query,
+    resolve_subscriber_process,
+    seed_delta_token_statements,
+    subscriber_process,
+)
+from erpl_dlt.query import ConfigurationError, QueryError
 
 
 class TestSubscriberName:
     def test_it_is_stable_for_a_provider(self):
         # SAP identifies the delta pointer by this name. If it changed between
         # runs, every run would silently be a full load.
-        first = subscriber_process("ABAP_CDS", "SEPM_ISOI$P")
-        second = subscriber_process("ABAP_CDS", "SEPM_ISOI$P")
+        first = subscriber_process("ABAP_CDS", "SEPM_ISOI$P", pipeline_name="sap")
+        second = subscriber_process("ABAP_CDS", "SEPM_ISOI$P", pipeline_name="sap")
         assert first == second
 
     def test_it_survives_sap_punctuation(self):
-        assert "$" not in subscriber_process("ABAP_CDS", "SEPM_ISOI$P")
+        assert "$" not in subscriber_process("ABAP_CDS", "SEPM_ISOI$P", pipeline_name="sap")
 
     def test_it_fits_sap_s_field(self):
-        assert len(subscriber_process("ABAP_CDS", "A" * 60)) <= 32
+        assert len(subscriber_process("ABAP_CDS", "A" * 60, pipeline_name="sap")) <= 32
+
+    def test_the_pipeline_is_part_of_the_identity(self):
+        first = subscriber_process("ABAP_CDS", "SEPM_ISOI$P", pipeline_name="sales")
+        second = subscriber_process("ABAP_CDS", "SEPM_ISOI$P", pipeline_name="finance")
+        assert first != second
+
+    def test_long_names_keep_a_distinguishing_suffix(self):
+        first = subscriber_process("ABAP_CDS", "A" * 60, pipeline_name="pipeline_" + "X" * 60)
+        second = subscriber_process("ABAP_CDS", "A" * 60, pipeline_name="pipeline_" + "Y" * 60)
+        assert first != second
+        assert len(first) <= 32
+        assert len(second) <= 32
 
     def test_a_hostile_context_is_refused(self):
         with pytest.raises(QueryError):
             subscriber_process("ABAP_CDS'; DROP", "X")
+
+    def test_state_subscriber_is_authoritative(self):
+        state = {"subscriber_process": "DLT_OLD", "initialized": True}
+        with pytest.raises(ConfigurationError, match="different SAP delta queue"):
+            resolve_subscriber_process(
+                context="ABAP_CDS",
+                name="SEPM_ISOI$P",
+                pipeline_name="sap",
+                explicit=None,
+                state=state,
+                resource="SEPM_ISOI$P",
+            )
+
+    def test_an_explicit_subscriber_can_match_existing_state(self):
+        state = {"subscriber_process": "DLT_SHARED", "initialized": True}
+        assert (
+            resolve_subscriber_process(
+                context="ABAP_CDS",
+                name="SEPM_ISOI$P",
+                pipeline_name="sap",
+                explicit="DLT_SHARED",
+                state=state,
+                resource="SEPM_ISOI$P",
+            )
+            == "DLT_SHARED"
+        )
 
 
 class TestOdpQueries:
@@ -91,3 +135,77 @@ class TestBicsSession:
     def test_quotes_in_a_member_cannot_escape(self):
         statements = session_statements("s", "C", filters=[{"characteristic": "X", "members": ["a'b"]}])
         assert "'a''b'" in " ".join(statements)
+
+
+class TestRecoveryMode:
+    """ERPL's recover parameter, and why it is not discovered by inspection."""
+
+    def test_a_recovery_read_asks_for_it(self):
+        sql = odp_rfc_query("ABAP_CDS", "P", "SUB", delta=True, columns=None, recovery_parameter="recover")
+        assert "recover := true" in sql
+
+    def test_it_is_a_boolean_not_a_mode_string(self):
+        # ERPL documents `recover (BOOLEAN, default false)`. An extraction-mode
+        # string would be rejected by the binder.
+        sql = odp_rfc_query("ABAP_CDS", "P", "SUB", delta=True, columns=None, recovery_parameter="recover")
+        assert "'R'" not in sql
+
+    def test_a_full_read_never_recovers(self):
+        sql = odp_rfc_query("ABAP_CDS", "P", "SUB", delta=False, columns=None, recovery_parameter="recover")
+        assert "recover" not in sql
+
+    def test_the_parameter_name_is_not_probed_from_duckdb_functions(self):
+        # duckdb_functions() reports named parameters positionally (col3, col4,
+        # ...), so a probe for the name always comes back empty and would
+        # silently disable recovery for everyone.
+        from erpl_dlt.odp import ODP_RECOVERY_PARAMETER
+
+        assert ODP_RECOVERY_PARAMETER == "recover"
+        assert odp_recovery_parameter(cursor=None) == "recover"
+
+
+class TestDeltaCursorIsReleased:
+    """ERPL: "delta cursors do not auto-close"."""
+
+    class _Cursor:
+        def __init__(self, answer="CLOSED", explode=False):
+            self.statements: list[str] = []
+            self._answer = answer
+            self._explode = explode
+
+        def execute(self, statement, *args):
+            self.statements.append(statement)
+            if self._explode:
+                raise RuntimeError("connection gone")
+            return self
+
+        def fetchone(self):
+            return (self._answer,)
+
+    def test_it_closes_with_the_subscriber_and_provider(self):
+        from erpl_dlt.odp import close_delta_cursor
+
+        cursor = self._Cursor()
+        close_delta_cursor(cursor, "ABAP_CDS", "SEPM_ISOI$P", "DLT_X")
+        assert "sap_odp_close_delta_cursor" in cursor.statements[0]
+        assert "'ABAP_CDS'" in cursor.statements[0]
+        assert "'DLT_X'" in cursor.statements[0]
+        assert "'SEPM_ISOI$P'" in cursor.statements[0]
+
+    def test_a_refusal_is_reported_not_raised(self, caplog):
+        from erpl_dlt.odp import close_delta_cursor
+
+        close_delta_cursor(self._Cursor(answer="REFUSED: mid-fetch"), "ABAP_CDS", "P", "SUB")
+        assert "could not be closed" in caplog.text
+
+    def test_a_broken_connection_does_not_fail_the_extract(self):
+        from erpl_dlt.odp import close_delta_cursor
+
+        close_delta_cursor(self._Cursor(explode=True), "ABAP_CDS", "P", "SUB")
+
+    def test_a_hostile_context_cannot_escape_the_pragma(self):
+        from erpl_dlt.odp import close_delta_cursor
+        from erpl_dlt.query import QueryError
+
+        with pytest.raises(QueryError):
+            close_delta_cursor(self._Cursor(), "ABAP'; DROP", "P", "SUB")

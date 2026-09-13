@@ -129,10 +129,12 @@ lifecycle. These decide whether a crash can lose an initial snapshot.
   (`GenerateRunId`, `odp_fetch.cpp:149`), while `I_SUBSCRIBER_PROCESS` is the
   stable subscriber. The run id is what SAP uses to tell one extraction attempt
   from another.
-- **unknown** — whether `erpl_dlt` can *reach* recover mode. `odp_rfc_query`
-  (`erpl_dlt/odp.py`) only ever asks for full or delta; nothing exposes `'R'`.
-  So after a crash the next run asks for `'D'` again, and whether SAP re-streams
-  the unconfirmed packet or moves on is **not established**. This is the open
-  question behind the subscriber-lifecycle design decision, and it should be
-  settled by experiment against a real system before the ODP source is called
-  production-ready.
+- **unknown** — whether every ERPL build lets `erpl_dlt` *reach* recover mode.
+  `erpl_dlt` now checks `duckdb_functions()` for a named `sap_odp_read_delta`
+  parameter that can carry the extraction mode and uses it for
+  `erpl_odp_source(..., recover=True)` when present. If the installed function
+  has no such named parameter, recovery is refused because there is no exposed
+  SQL API to request `'R'`. So after a crash on such a build, whether asking for
+  `'D'` again re-streams the unconfirmed packet or moves on is **not
+  established**. This should be settled by experiment against a real system
+  before the ODP source is called production-ready.

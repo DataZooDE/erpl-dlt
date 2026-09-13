@@ -71,6 +71,20 @@ date as NULL. dlt's naming normaliser will rename columns containing digits:
 
 Each resource takes its own DuckDB cursor, so `parallelized=True` is safe.
 
+`erpl_odp_source` uses SAP's ODQ subscriber process as the delta identity. By
+default that name is stable for the dlt pipeline name and ODP provider, and it
+is capped at SAP's 32-character field width with a hash suffix so long names do
+not collide by truncation. If you need a pre-existing SAP subscriber, pass
+`subscriber_processes={provider_name: "SUBSCRIBER"}`; after a delta run records a
+subscriber in dlt state, a later run that would use a different subscriber is
+refused instead of silently starting a new delta queue.
+
+ODP delta reads are not transactional with respect to the destination load.
+SAP's pointer can advance while dlt commits nothing; what can be recovered then
+depends on ODQ confirmation semantics. ERPL's source shows a recover mode for
+the last unconfirmed packet, but whether a particular installed ERPL build
+exposes that mode is checked from `duckdb_functions()` at runtime.
+
 ## Development
 
 ```bash
