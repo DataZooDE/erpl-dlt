@@ -75,11 +75,20 @@ v2026.09.04 + DuckDB 1.5.5 with a live SAP ABAP Platform Trial), **assumed**
 - **verified** — through Arrow those arrive as `date32[day]`,
   `decimal128(15, 2)`, `int64`, `string`. A currency field does **not** land as
   a float.
-- **assumed** — TIMS maps to `TIME` (consistent with the DDIC table in the
-  Airbyte connector's `types.py`, not separately executed here).
-- **unknown** — what an empty SAP date (`'00000000'`) becomes. Neither SFLIGHT
-  nor a 20,000-row DD02L sample contained one, so this was never observed. Must
-  be settled before claiming sentinel handling.
+- **verified** — TIMS maps to `TIME`: `DD02L.AS4TIME` came back as
+  `datetime.time(16, 7, 5)`, `typeof` `TIME`.
+- **verified** — an empty SAP date (`'00000000'`) becomes **NULL**, and the
+  column stays `DATE`. `USR02` has 6 rows and `count(GLTGV) = 0`. The extension
+  handles the sentinel; nothing downstream needs to.
+- **verified** — `odata_read` pushes predicates too: `EXPLAIN … WHERE ITEMID =
+  'X'` shows `Filters: ITEMID='X'` inside the `ODATA_READ` node.
+- **verified** — dlt's snake_case normaliser splits letter/digit boundaries, so
+  `AS4DATE` lands as `as4_date`. SAP column names are full of digits, so this
+  affects most tables.
+- **verified** — a SQL predicate needs a *SQL* literal even though the column is
+  SAP's: `FLDATE >= '20260905'` fails with "invalid date field format: expected
+  (YYYY-MM-DD)". The compact DDIC form belongs only in an ABAP `FILTER :=`
+  string. Both forms exist in `query.py` and are tested against each other.
 
 ## Arrow extraction
 

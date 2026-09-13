@@ -1,0 +1,17 @@
+erpl-dlt
+Copyright 2026 DataZoo GmbH
+
+This product is licensed under the Apache License, Version 2.0.
+
+It loads, at runtime, the ERPL DuckDB extensions (erpl_rfc, erpl_bics, erpl_odp,
+erpl_web) and the SAP NetWeaver RFC SDK libraries they link against.
+
+  * The ERPL extensions are licensed under the Business Source License 1.1
+    (BUSL-1.1) by DataZoo GmbH. They are NOT covered by the Apache-2.0 licence
+    of this package, and installing this package grants no licence to them.
+    See https://erpl.io for terms.
+
+  * The SAP NetWeaver RFC SDK is proprietary to SAP SE and is subject to SAP's
+    own licence terms. Obtaining it is the user's responsibility.
+
+Distributing this package does not distribute a licence to either.
