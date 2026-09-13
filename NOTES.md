@@ -112,3 +112,27 @@ v2026.09.04 + DuckDB 1.5.5 with a live SAP ABAP Platform Trial), **assumed**
 - **verified** — credentials go through `CREATE SECRET (TYPE sap_rfc, ASHOST $h,
   …)` with **bound parameters**, so no secret is ever interpolated into SQL text.
   `erpl_web` uses a separate `http_basic` secret scoped to a URL prefix.
+
+## ODP delta recovery semantics (verified from the ERPL source)
+
+Read from `erpl/odp/src/odp_fetch.cpp` while reviewing the ODP subscriber
+lifecycle. These decide whether a crash can lose an initial snapshot.
+
+- **verified** — `I_EXTRACTION_MODE` has three values (`odp_fetch.cpp:113-119`):
+  `'F'` full with no queue registered, `'D'` delta (auto-DELTAINIT on a fresh
+  subscriber), and **`'R'` RECOVER, which "re-streams the last unconfirmed
+  packet without advancing the pointer"**.
+- **verified** — so the ODQ pointer advances on *confirmation*, not on fetch,
+  and an unconfirmed packet is re-deliverable. That is what makes a crashed run
+  recoverable in principle.
+- **verified** — `I_SUBSCRIBER_RUN` is a fresh timestamp every open
+  (`GenerateRunId`, `odp_fetch.cpp:149`), while `I_SUBSCRIBER_PROCESS` is the
+  stable subscriber. The run id is what SAP uses to tell one extraction attempt
+  from another.
+- **unknown** — whether `erpl_dlt` can *reach* recover mode. `odp_rfc_query`
+  (`erpl_dlt/odp.py`) only ever asks for full or delta; nothing exposes `'R'`.
+  So after a crash the next run asks for `'D'` again, and whether SAP re-streams
+  the unconfirmed packet or moves on is **not established**. This is the open
+  question behind the subscriber-lifecycle design decision, and it should be
+  settled by experiment against a real system before the ODP source is called
+  production-ready.
