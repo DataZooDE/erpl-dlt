@@ -9,6 +9,9 @@ dlt sources for SAP, built on the [ERPL](https://erpl.io) DuckDB extensions.
 
 ```bash
 pip install erpl-dlt
+
+# or pull the container image
+docker pull ghcr.io/datazoode/erpl-dlt:2026.9.4
 ```
 
 ```python
