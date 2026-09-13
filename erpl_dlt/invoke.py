@@ -12,8 +12,11 @@ Two safety properties, both deliberate:
 * Only function modules named in the configuration are ever called. There is no
   pattern discovery here -- probing ``BAPI_*_CREATE`` to learn its shape is not
   something a pipeline should do on its own.
-* Parameter names are checked against ``sap_rfc_describe_function`` before the
-  call, so a typo fails with our message rather than a SAP dump.
+* Parameter *names* are checked against the shape SAP allows before they are
+  interpolated. They are **not** checked against the function's own interface --
+  a name SAP does not know reaches SAP and fails there, with SAP's message.
+  Validating against ``sap_rfc_describe_function`` first would turn that into a
+  local error, and is not implemented.
 """
 
 from __future__ import annotations
@@ -100,6 +103,10 @@ def invoke_query(function: str, parameters: Mapping[str, Any] | None) -> str:
 
 def _render(value: Any) -> str:
     """A parameter value as a DuckDB literal, structures and tables included."""
+    if value is None:
+        # Without this, None became the string 'None' and SAP received four
+        # characters where the caller meant "no value".
+        return "NULL"
     if isinstance(value, Mapping):
         return "{" + ", ".join(f"{sql_literal(str(k))}: {_render(v)}" for k, v in value.items()) + "}"
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):

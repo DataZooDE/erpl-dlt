@@ -19,7 +19,7 @@ from dlt.sources import DltResource
 
 from erpl_dlt.config import ErplSettings, ODataCredentials
 from erpl_dlt.connection import ErplConnection
-from erpl_dlt.query import QueryError, incremental_predicate, odata_read_query
+from erpl_dlt.query import QueryError, odata_incremental_predicate, odata_read_query
 from erpl_dlt.settings import WEB_EXTENSIONS
 
 logger = logging.getLogger("erpl_dlt")
@@ -89,7 +89,7 @@ def erpl_odata_source(
             url = resolve_entity_url(credentials.base_url, entity_set)
             where = None
             if cursor_column and incremental is not None and incremental.last_value is not None:
-                where = incremental_predicate(cursor_column, incremental.last_value)
+                where = odata_incremental_predicate(cursor_column, incremental.last_value)
             sql, parameters = odata_read_query(url, where=where, top=top, expand=expand, max_page_size=max_page_size)
             logger.debug("%s: %s", entity_set, sql)
             reader = erpl.cursor().execute(sql, parameters).to_arrow_reader(config.batch_size)

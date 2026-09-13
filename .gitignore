@@ -9,3 +9,6 @@ dist/
 .ruff_cache/
 dev_rfc.log
 *.trc
+
+# Antigravity delegation data (model responses, context files)
+.antigravity-delegate/

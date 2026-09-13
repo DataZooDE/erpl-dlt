@@ -78,11 +78,11 @@ class TestBicsSession:
 
     def test_variables_render_as_bex_ranges(self):
         statements = session_statements("s", "C", variables=[{"name": "V", "low": "202601"}])
-        assert "'V' AS NAME" in statements[0] and "'EQ' AS OP" in statements[0]
+        assert "'NAME': 'V'" in statements[0] and "'OP': 'EQ'" in statements[0]
 
     def test_a_high_value_makes_it_a_between(self):
         statements = session_statements("s", "C", variables=[{"name": "V", "low": "a", "high": "b"}])
-        assert "'BT' AS OP" in statements[0]
+        assert "'OP': 'BT'" in statements[0]
 
     def test_a_slice_filter_is_applied(self):
         statements = session_statements("s", "C", filters=[{"characteristic": "0CALMONTH", "members": ["202601"]}])

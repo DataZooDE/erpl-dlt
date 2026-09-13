@@ -60,15 +60,17 @@ def session_statements(
             low = str(variable.get("low", ""))
             high = str(variable.get("high", ""))
             operator = variable.get("op") or ("BT" if high else "EQ")
+            # `{'NAME': 'V', ...}` is DuckDB struct syntax; `{'V' AS NAME}` is
+            # not, and fails at the parser before reaching SAP.
             rendered.append(
                 "{"
                 + ", ".join(
                     [
-                        f"{sql_literal(variable.get('name', ''))} AS NAME",
-                        f"{sql_literal(variable.get('sign', 'I'))} AS SIGN",
-                        f"{sql_literal(operator)} AS OP",
-                        f"{sql_literal(low)} AS LOW",
-                        f"{sql_literal(high)} AS HIGH",
+                        f"'NAME': {sql_literal(variable.get('name', ''))}",
+                        f"'SIGN': {sql_literal(variable.get('sign', 'I'))}",
+                        f"'OP': {sql_literal(operator)}",
+                        f"'LOW': {sql_literal(low)}",
+                        f"'HIGH': {sql_literal(high)}",
                     ]
                 )
                 + "}"

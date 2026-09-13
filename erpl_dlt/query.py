@@ -32,6 +32,27 @@ class QueryError(ValueError):
     """A query could not be built from the given configuration."""
 
 
+#: OData property names are case-sensitive and mixed case is normal
+#: (``SalesOrderItem``), so they are checked but never folded.
+ODATA_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")
+
+
+def check_odata_identifier(name: str, *, what: str = "property") -> str:
+    """Return ``name`` unchanged, or raise if it is not an OData property name.
+
+    Deliberately not :func:`check_identifier`: uppercasing ``SalesOrderItem``
+    into ``SALESORDERITEM`` would produce a predicate the service rejects, since
+    OData compares property names case-sensitively.
+    """
+    candidate = str(name).strip()
+    if not ODATA_IDENTIFIER.match(candidate):
+        raise QueryError(
+            f"{what} {name!r} is not a valid OData property name: a letter or underscore followed by "
+            "letters, digits and underscores."
+        )
+    return candidate
+
+
 def check_identifier(name: str, *, what: str = "name") -> str:
     """Return ``name`` uppercased, or raise if it is not a SAP identifier."""
     candidate = str(name).strip().upper()
@@ -151,6 +172,11 @@ def incremental_predicate(column: str, last_value: Any) -> str:
     """
     name = check_identifier(column, what="cursor column")
     return f"{name} >= {sql_value_literal(last_value)}"
+
+
+def odata_incremental_predicate(property_name: str, last_value: Any) -> str:
+    """The same comparison for an OData property, with its case preserved."""
+    return f"{check_odata_identifier(property_name)} >= {sql_value_literal(last_value)}"
 
 
 def abap_predicate(column: str, last_value: Any) -> str:

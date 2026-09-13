@@ -131,7 +131,9 @@ class ErplConnection:
     ) -> None:
         con = self._connection
         if self.settings.custom_extension_repository:
-            con.execute(f"SET custom_extension_repository = '{self.settings.custom_extension_repository}'")
+            # Bound, not interpolated. It is configuration rather than user
+            # input, but configuration comes from files and environments too.
+            con.execute("SET custom_extension_repository = ?", [self.settings.custom_extension_repository])
         for extension in self._extensions:
             try:
                 con.load_extension(extension)
