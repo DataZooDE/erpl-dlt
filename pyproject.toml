@@ -22,11 +22,10 @@ dependencies = [
     "dlt>=1.30,<2",
     "duckdb>=1.5.5,<2",
     "pyarrow>=14",
+    "erpl-extensions>=2026.9.4",
 ]
 
 [project.optional-dependencies]
-# The extension binaries. Separately licensed (BUSL-1.1) -- see NOTICE.
-extensions = ["erpl-extensions>=2026.9.4"]
 dev = ["pytest>=8", "pytest-mock>=3", "ruff>=0.6", "mypy>=1.11"]
 
 [project.urls]

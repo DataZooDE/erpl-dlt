@@ -152,7 +152,7 @@ class ErplConnection:
                 con.load_extension(extension)
             except Exception as exc:
                 raise RuntimeError(
-                    f"Could not load the ERPL extension {extension!r}. Install erpl-dlt[extensions], "
+                    f"Could not load the ERPL extension {extension!r}. Ensure erpl-extensions is installed, "
                     "or point settings.extension_dir at a directory containing the .duckdb_extension files."
                 ) from exc
         # Telemetry off: this is someone's production SAP system.
