@@ -19,7 +19,13 @@ from dlt.sources import DltResource
 
 from erpl_dlt.config import ErplSettings, ODataCredentials
 from erpl_dlt.connection import ErplConnection
-from erpl_dlt.query import QueryError, odata_incremental_predicate, odata_read_query
+from erpl_dlt.query import (
+    QueryError,
+    check_unique_names,
+    odata_incremental_predicate,
+    odata_read_query,
+    resolve_write_disposition,
+)
 from erpl_dlt.settings import WEB_EXTENSIONS
 
 logger = logging.getLogger("erpl_dlt")
@@ -54,6 +60,7 @@ def erpl_odata_source(
     top: int | None = None,
     expand: str | None = None,
     max_page_size: int | None = None,
+    write_disposition: str | None = None,
     connection: Any | None = None,
 ) -> Iterator[DltResource]:
     """One dlt resource per OData entity set.
@@ -63,6 +70,7 @@ def erpl_odata_source(
         cursor_columns: per entity set, the field to sync incrementally on.
         primary_keys: per entity set, the key. ``merge`` where given.
         top / expand / max_page_size: passed to ``odata_read``.
+        write_disposition: overrides the default; see `resolve_write_disposition`.
     """
     config = settings or ErplSettings()
     if credentials.is_insecure:
@@ -97,13 +105,19 @@ def erpl_odata_source(
 
         return read
 
+    check_unique_names([e.rstrip("/").rsplit("/", 1)[-1].lower() for e in entity_sets], what="entity set")
     for entity_set in entity_sets:
         name = entity_set.rstrip("/").rsplit("/", 1)[-1].lower()
         key = list((primary_keys or {}).get(entity_set) or [])
         yield dlt.resource(  # type: ignore[call-overload]  # dlt's overloads do not cover dynamically built resources
             make_reader(entity_set, (cursor_columns or {}).get(entity_set)),
             name=name,
-            write_disposition="merge" if key else "replace",
+            write_disposition=resolve_write_disposition(
+                primary_key=key,
+                cursor_column=(cursor_columns or {}).get(entity_set),
+                explicit=write_disposition,
+                resource=entity_set,
+            ),
             primary_key=key or None,
             parallelized=True,
         )()

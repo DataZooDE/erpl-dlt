@@ -32,6 +32,52 @@ class QueryError(ValueError):
     """A query could not be built from the given configuration."""
 
 
+class ConfigurationError(ValueError):
+    """The source was configured in a way that would lose or duplicate data."""
+
+
+def check_unique_names(names: list[str], *, what: str = "resource") -> None:
+    """Refuse a source whose resources would share a name.
+
+    Names are derived -- a table name, the last segment of a URL, an ODP
+    provider with its punctuation folded -- so two different objects can land on
+    one name, and dlt would then give them one table and one incremental state.
+    """
+    seen: dict[str, int] = {}
+    for name in names:
+        seen[name] = seen.get(name, 0) + 1
+    collisions = sorted(name for name, count in seen.items() if count > 1)
+    if collisions:
+        raise ConfigurationError(
+            f"two or more {what}s resolve to the same name: {', '.join(collisions)}. "
+            "They would share a destination table and one incremental state. Rename or split the source."
+        )
+
+
+def resolve_write_disposition(*, primary_key: object, cursor_column: object, explicit: object, resource: str) -> str:
+    """Pick a write disposition, refusing the combination that silently truncates.
+
+    `replace` with an incremental cursor is the trap: the second run extracts
+    only rows at or after the cursor, and `replace` then overwrites the whole
+    table with that increment. Measured against dlt 1.30 in isolation -- 10 rows
+    became 6 -- and it does not announce itself, because a run where nothing
+    changed deduplicates to zero rows and leaves the table alone. It only bites
+    once there is real data to load.
+    """
+    if explicit:
+        return str(explicit)
+    if primary_key:
+        return "merge"
+    if cursor_column:
+        raise ConfigurationError(
+            f"{resource}: an incremental cursor needs a primary key. Without one the disposition would "
+            "be 'replace', and the second run would overwrite the table with just the increment. "
+            "Pass primary_keys for this resource, or set write_disposition='append' to accept "
+            "duplicates at the cursor boundary."
+        )
+    return "replace"
+
+
 #: OData property names are case-sensitive and mixed case is normal
 #: (``SalesOrderItem``), so they are checked but never folded.
 ODATA_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,127}$")

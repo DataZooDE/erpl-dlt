@@ -19,7 +19,7 @@ from dlt.sources import DltResource
 
 from erpl_dlt.config import ErplSettings, SapRfcCredentials
 from erpl_dlt.connection import ErplConnection
-from erpl_dlt.query import incremental_predicate, table_read_query
+from erpl_dlt.query import check_unique_names, incremental_predicate, resolve_write_disposition, table_read_query
 from erpl_dlt.settings import RFC_EXTENSIONS
 
 logger = logging.getLogger("erpl_dlt")
@@ -50,6 +50,7 @@ def erpl_rfc_source(
     cursor_columns: Mapping[str, str] | None = None,
     primary_keys: Mapping[str, Sequence[str]] | None = None,
     max_rows: int | None = None,
+    write_disposition: str | None = None,
     connection: Any | None = None,
 ) -> Iterator[DltResource]:
     """One dlt resource per SAP table or CDS view.
@@ -67,6 +68,9 @@ def erpl_rfc_source(
         primary_keys: per table, the key. Sets ``merge`` where given, and
             ``replace`` where not.
         max_rows: a SAP-side row cap, useful for a first look at a large table.
+        write_disposition: overrides the default. Without it, a primary key means
+            ``merge``, no cursor means ``replace``, and a cursor without a key is
+            refused -- see `resolve_write_disposition`.
         connection: an already-open DuckDB connection to use instead of opening
             one. Its lifetime stays yours.
     """
@@ -112,12 +116,18 @@ def erpl_rfc_source(
 
         return read
 
+    check_unique_names([t.lower() for t in table_names], what="table")
     for table in table_names:
         key = list((primary_keys or {}).get(table) or [])
         yield dlt.resource(  # type: ignore[call-overload]  # dlt's overloads do not cover dynamically built resources
             make_reader(table, (cursor_columns or {}).get(table)),
             name=table.lower(),
-            write_disposition="merge" if key else "replace",
+            write_disposition=resolve_write_disposition(
+                primary_key=key,
+                cursor_column=(cursor_columns or {}).get(table),
+                explicit=write_disposition,
+                resource=table,
+            ),
             primary_key=key or None,
             parallelized=True,
         )()

@@ -62,21 +62,34 @@ def default_extension_dir(settings: ErplSettings | None = None) -> str | None:
 def preload_native_libraries(extension_dir: str | None) -> None:
     """Put the SAP and ICU symbols where the extension will look for them.
 
-    Best effort: a failure here is not worth ending an extract for, because the
-    real error arrives from DuckDB's own ``LOAD`` naming the extension.
+    Individual failures are tolerated: the libraries have load-order
+    dependencies and a partial failure is survivable -- measured against a real
+    system, the ICU i18n library reports "could not open" and the RFC read then
+    succeeds anyway. What is *not* survivable is none of them loading, because
+    DuckDB's `LOAD` then aborts the process instead of raising. That case is
+    turned into an exception here, while there is still a stack to raise on.
     """
     if not extension_dir:
         return
     root = Path(extension_dir)
     if not root.is_dir():
         return
-    for candidate in sorted(root.rglob("*")):
-        if not candidate.is_file() or not candidate.name.endswith(_NATIVE_SUFFIXES):
-            continue
+    candidates = [path for path in sorted(root.rglob("*")) if path.is_file() and path.name.endswith(_NATIVE_SUFFIXES)]
+    if not candidates:
+        return
+    loaded = 0
+    for candidate in candidates:
         try:
             ctypes.CDLL(str(candidate), mode=ctypes.RTLD_GLOBAL)
-        except OSError as exc:  # noqa: PERF203 - see the docstring
+            loaded += 1
+        except OSError as exc:
             logger.debug("Could not preload %s: %s", candidate.name, exc)
+    if loaded == 0:
+        raise RuntimeError(
+            f"None of the {len(candidates)} native libraries in {extension_dir} could be loaded. "
+            "Loading the ERPL extensions now would abort the process rather than raise. "
+            "Check that the directory holds the SAP NetWeaver RFC and ICU shared objects for this platform."
+        )
 
 
 class ErplConnection:

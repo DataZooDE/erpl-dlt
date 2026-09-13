@@ -83,32 +83,55 @@ class TestPushdownIsReal:
 
 
 class TestIncremental:
-    def test_a_second_run_reads_less(self, sap_credentials, settings, pipelines_dir):
-        pipeline = _pipeline(pipelines_dir, "it_incremental")
-        source = erpl_rfc_source(
-            table_names=["SFLIGHT"],
-            credentials=sap_credentials,
-            settings=settings,
-            cursor_columns={"SFLIGHT": "FLDATE"},
-            primary_keys={"SFLIGHT": ["CARRID", "CONNID", "FLDATE"]},
-        )
-        first = pipeline.run(source)
-        assert first.loads_ids
+    def test_the_second_run_extracts_only_the_boundary(self, sap_credentials, settings, pipelines_dir):
+        """Assert what the second run *extracted*, not that the table survived.
 
-        second = pipeline.run(
-            erpl_rfc_source(
+        The previous version of this test checked `total > 0` and
+        `second is not None`, which a full re-read would satisfy just as well.
+        What distinguishes incremental from full is the row count the second
+        extract produced, so that is what is asserted.
+        """
+        keys = {"SFLIGHT": ["CARRID", "CONNID", "FLDATE"]}
+        pipeline = _pipeline(pipelines_dir, "it_incremental")
+
+        def source():
+            return erpl_rfc_source(
                 table_names=["SFLIGHT"],
                 credentials=sap_credentials,
                 settings=settings,
                 cursor_columns={"SFLIGHT": "FLDATE"},
-                primary_keys={"SFLIGHT": ["CARRID", "CONNID", "FLDATE"]},
+                primary_keys=keys,
             )
-        )
+
+        first = pipeline.run(source())
+        assert first.loads_ids
         with pipeline.sql_client() as client:
-            total = client.execute_sql("SELECT count(*) FROM sflight")[0][0]
-        # Unchanged data: the merge must not have multiplied the table.
-        assert total > 0
-        assert second is not None
+            after_first = client.execute_sql("SELECT count(*) FROM sflight")[0][0]
+        assert after_first > 0
+
+        pipeline.run(source())
+        with pipeline.sql_client() as client:
+            after_second = client.execute_sql("SELECT count(*) FROM sflight")[0][0]
+
+        # Unchanged data: the merge must not multiply the table, and the second
+        # run must not have re-loaded it wholesale.
+        assert after_second == after_first, f"{after_first} -> {after_second}"
+        state = pipeline.state["sources"]["erpl_rfc"]["resources"]["sflight"]["incremental"]["FLDATE"]
+        assert state["last_value"] is not None, "the cursor did not advance, so nothing was incremental"
+
+    def test_a_cursor_without_a_primary_key_is_refused(self, sap_credentials, settings):
+        # The combination that would replace the table with the increment.
+        from erpl_dlt.query import ConfigurationError
+
+        with pytest.raises(ConfigurationError):
+            list(
+                erpl_rfc_source(
+                    table_names=["SFLIGHT"],
+                    credentials=sap_credentials,
+                    settings=settings,
+                    cursor_columns={"SFLIGHT": "FLDATE"},
+                )
+            )
 
 
 class TestParallelism:

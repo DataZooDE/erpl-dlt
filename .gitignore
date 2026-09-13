@@ -12,3 +12,7 @@ dev_rfc.log
 
 # Antigravity delegation data (model responses, context files)
 .antigravity-delegate/
+*.duckdb
+
+# Codex delegation data
+.codex-delegate/

@@ -29,7 +29,7 @@ from dlt.sources import DltResource
 
 from erpl_dlt.config import ErplSettings, ODataCredentials, SapRfcCredentials
 from erpl_dlt.connection import ErplConnection
-from erpl_dlt.query import check_identifier, sql_literal
+from erpl_dlt.query import check_identifier, check_unique_names, sql_literal
 from erpl_dlt.settings import ODP_RFC_EXTENSIONS, WEB_EXTENSIONS
 
 logger = logging.getLogger("erpl_dlt")
@@ -132,6 +132,7 @@ def erpl_odp_source(
             state["subscriber_process"] = subscriber
             state["initialized"] = True
 
+    check_unique_names([f"{context}_{n}".lower().replace("$", "_").replace("/", "_") for n in names], what="provider")
     for name in names:
         key = list((primary_keys or {}).get(name) or [])
         yield dlt.resource(  # type: ignore[call-overload]  # dlt's overloads do not cover dynamically built resources

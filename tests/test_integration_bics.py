@@ -59,11 +59,18 @@ class TestBicsSession:
     def test_two_sessions_do_not_collide(self, sap_credentials, settings):
         # Each execution gets a fresh session id, so two resources running at
         # once cannot overwrite one another's state on the BW side.
+        results: dict[str, int] = {}
         with ErplConnection(extensions=BICS_EXTENSIONS, settings=settings, rfc_credentials=sap_credentials) as erpl:
             for session_id in ("dlt_probe_a", "dlt_probe_b"):
                 cursor = erpl.cursor()
                 statements = session_statements(session_id, CUBE)
                 for statement in statements[:-1]:
                     cursor.execute(statement).fetchall()
-                rows = cursor.execute(statements[-1]).fetch_arrow_table().num_rows
-                assert rows >= 0
+                table = cursor.execute(statements[-1]).fetch_arrow_table()
+                results[session_id] = table.num_rows
+        # `>= 0` was vacuous: every integer satisfies it. Two independent
+        # sessions over the same provider must return the same row count, and a
+        # non-zero one, or they are not really independent.
+        assert len(results) == 2
+        assert all(count > 0 for count in results.values()), results
+        assert len(set(results.values())) == 1, f"the two sessions disagreed: {results}"

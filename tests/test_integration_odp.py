@@ -34,11 +34,19 @@ class TestOdpOverRfc:
         pipeline = dlt.pipeline(
             pipeline_name="it_odp", destination="duckdb", dataset_name="odp", pipelines_dir=pipelines_dir
         )
-        pipeline.run(erpl_odp_source(names=[ODP_NAME], credentials=sap_credentials, context=ODP_CONTEXT))
+        # full_refresh: a delta read is history-dependent by design -- once an
+        # earlier run has consumed the queue, a later one correctly returns
+        # nothing and creates no table. Asserting "rows arrived" therefore has
+        # to ask for a snapshot, which also leaves the delta pointer alone.
+        pipeline.run(
+            erpl_odp_source(
+                names=[ODP_NAME], credentials=sap_credentials, context=ODP_CONTEXT, full_refresh=True
+            )
+        )
         table = f"{ODP_CONTEXT}_{ODP_NAME}".lower().replace("$", "_")
         with pipeline.sql_client() as client:
             count = client.execute_sql(f"SELECT count(*) FROM {table}")[0][0]
-        assert count > 0, "a DELTAINIT must return the current snapshot"
+        assert count > 0, "a full ODP read must return the current snapshot"
 
     def test_the_subscriber_is_recorded_so_the_next_run_is_a_delta(self, sap_credentials, settings, pipelines_dir):
         _needs_odp()
