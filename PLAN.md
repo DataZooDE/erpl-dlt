@@ -26,17 +26,35 @@ Two traps the brief does not mention, both already solved in `erpl-airbyte`:
 
 ## Scope
 
-Ship **three** sources in v0.1, in this order:
+**All five ERPL read paths in v0.1**, ordered so that each slice ships something
+usable and the hardest state handling comes after the mechanics are proven:
 
-1. `erpl_rfc_source(...)` — tables and CDS views. The workhorse.
-2. `erpl_odata_source(...)` — generic OData via `odata_read`, with `$top`/`$skip`/
-   `$expand`/`max_page_size` exposed.
-3. `erpl_odp_source(...)` — ODP delta, over RFC or the Gateway.
+| Source | Wraps | Why it is here |
+|---|---|---|
+| `erpl_rfc_source` | `sap_read_table` | The workhorse: tables and CDS views. |
+| `erpl_odata_source` | `odata_read` | Generic OData v2/v4, any service, not only SAP ODP. |
+| `erpl_odp_source` | `sap_odp_read_full` / `sap_odp_read_delta` / `odp_odata_read` | Real server-side delta. The reason dlt users want SAP. |
+| `erpl_bics_source` | `sap_bics_begin` → … → `sap_bics_result` | BW queries and InfoProviders. |
+| `erpl_invoke_source` | `sap_rfc_invoke` | Function modules and BAPIs. |
 
-`erpl_bics_source` and `erpl_rfc_invoke_source` are **out of scope for v0.1** and
-named here so the module layout leaves room: BICS is a stateful multi-statement
-session and function-module invocation needs `RETURN`-table failure handling —
-both are solved in `erpl-airbyte` and both deserve their own slice.
+Two of these are not ordinary table reads, and the plan treats them as such:
+
+- **BICS is a stateful session.** A read is `sap_bics_begin`, then any of
+  `sap_bics_rows` / `sap_bics_columns` / `sap_bics_filter` /
+  `sap_bics_set_char_prop`, then `sap_bics_result` — a list of statements where
+  only the last one yields rows. dlt resources therefore need a *setup* concept:
+  the resource runs the preamble on its own cursor before streaming batches.
+  BW also refuses to paginate — it materialises the whole result set or none of
+  it — so slicing by a characteristic member is the only way to bound memory,
+  and that becomes a first-class argument rather than an afterthought.
+- **`sap_rfc_invoke` reports failure in data, not exceptions.** A BAPI returns a
+  `RETURN` table; `TYPE in ('E','A')` is a failure that would otherwise look like
+  an empty resource. The call is issued **without** a `path` so one invocation
+  yields both the payload and `RETURN`, which is then inspected before a single
+  row is emitted. Parameter names are validated against
+  `sap_rfc_describe_function` first, so a typo fails with our message rather than
+  a SAP dump — and discovery never invokes anything, which matters when the
+  configured module is `BAPI_*_CREATE`.
 
 ## Reuse from erpl-airbyte
 
@@ -62,6 +80,8 @@ erpl_dlt/
   rfc.py           # table + CDS view resources
   odata.py         # generic OData resources
   odp.py           # ODP delta resources (RFC and Gateway)
+  bics.py          # BW query resources: session preamble then result
+  invoke.py        # function-module resources, incl. RETURN-table failure
   query.py         # SQL building: identifiers, literals, projection, predicates
   typing.py        # Arrow/dlt schema helpers and DDIC expectations
   settings.py      # batch size, extension repo, thread budget
@@ -84,10 +104,17 @@ def erpl_rfc_source(
 ) -> DltSource: ...
 ```
 
-`erpl_odata_source(service_url, entity_sets=..., top=..., expand=...)` and
-`erpl_odp_source(context, names=..., transport="rfc"|"odata", subscriber=...)`
-follow the same shape. Every resource is built by passing the generator
-*function* to `dlt.resource`, so hints stay overridable via `apply_hints`.
+The others follow the same shape:
+
+```python
+erpl_odata_source(service_url, entity_sets=..., top=..., expand=...)
+erpl_odp_source(context, names=..., transport="rfc" | "odata", subscriber=...)
+erpl_bics_source(cube, queries=..., rows=..., columns=..., variables=..., slice_by=...)
+erpl_invoke_source(functions=[{"name": ..., "function": ..., "path": ..., "parameters": {...}}])
+```
+
+Every resource is built by passing the generator *function* to `dlt.resource`,
+so hints stay overridable via `apply_hints`.
 
 ## Implementation order — vertical slices, each ending green
 
@@ -109,7 +136,14 @@ follow the same shape. Every resource is built by passing the generator
    for ODP: a second run in a *fresh process* returns zero rows — the property
    that proves the token in dlt state is sufficient, which is exactly how the
    Airbyte connector's ODP test is written.
-6. **Polish**: README with the licence notice above the fold, `NOTICE`, examples,
+6. **BICS.** Introduces the setup-statements concept: preamble on the resource's
+   own cursor, then stream `sap_bics_result`. Gate: a real BW query returns rows,
+   and a sliced query returns the union of its members without a second session
+   leaking.
+7. **Function modules.** Gate: a BAPI whose `RETURN` carries `TYPE='E'` fails the
+   resource with the SAP message attached, rather than yielding zero rows; and a
+   lowercase `RETURN` table is read the same way as an uppercase one.
+8. **Polish**: README with the licence notice above the fold, `NOTICE`, examples,
    `justfile`.
 
 ## Testing
@@ -139,6 +173,9 @@ end-to-end tests against the ABAP trial with **no mocks**.
   installing this package grants no licence to them. Above the fold in the README.
 - `__version__`, plus the ERPL version the package was tested against
   (v2026.09.04) recorded in `settings.py`.
+- **`erpl-extensions` is a hard runtime dependency.** That package must be on
+  PyPI before `erpl-dlt` can be released — the same publish that unblocks
+  `erpl-airbyte`. Until then the dev workflow installs it from the local wheel.
 
 ## Out of scope
 
